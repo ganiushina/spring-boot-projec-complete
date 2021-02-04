@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -69,12 +70,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-        User user = userRepository.findOneByUserName(userName);
-        if (user == null) {
-            throw new UsernameNotFoundException("Invalid username or password.");
-        }
-        return new org.springframework.security.core.userdetails.User(user.getUserName(), user.getPassword(),
-                mapRolesToAuthorities(user.getRoles()));
+        Optional<User> userFromDb = Optional.ofNullable(userRepository.findOneByUserName(userName));
+        userFromDb.orElseThrow(() -> new UsernameNotFoundException("Invalid username or password."));
+        return new org.springframework.security.core.userdetails.User(userFromDb.get().getUserName(), userFromDb.get().getPassword(),
+                mapRolesToAuthorities(userFromDb.get().getRoles()));
     }
 
     private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Collection<Role> roles) {

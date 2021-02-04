@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProductsService {
@@ -25,7 +26,8 @@ public class ProductsService {
     }
 
     public Product findById(Long id) {
-        return productsRepository.findById(id).orElse(null);
+        Optional<Product> ProductFromDb = productsRepository.findById(id);
+        return ProductFromDb.orElse(new Product());
     }
 
     public List<Product> getAllProducts() {

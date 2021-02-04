@@ -4,6 +4,7 @@ import com.geekbrains.springbootproject.entities.DeliveryAddress;
 import com.geekbrains.springbootproject.entities.Order;
 import com.geekbrains.springbootproject.entities.Product;
 import com.geekbrains.springbootproject.entities.User;
+import com.geekbrains.springbootproject.repositories.specifications.ProductFilters;
 import com.geekbrains.springbootproject.repositories.specifications.ProductSpecs;
 import com.geekbrains.springbootproject.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,32 +42,15 @@ public class ShopController {
     ) {
         final int currentPage = (page.orElse(0) < 1) ? INITIAL_PAGE : page.get() - 1;
 
-        Specification<Product> spec = Specification.where(null);
-        StringBuilder filters = new StringBuilder();
-        if (word != null) {
-            spec = spec.and(ProductSpecs.titleContains(word));
-            filters.append("&word=" + word);
-        }
-        if (min != null) {
-            spec = spec.and(ProductSpecs.priceGreaterThanOrEq(min));
-            filters.append("&min=" + min);
-        }
-        if (max != null) {
-            spec = spec.and(ProductSpecs.priceLesserThanOrEq(max));
-            filters.append("&max=" + max);
-        }
+        ProductFilters productFilter = new ProductFilters(word, min, max);
 
-        Page<Product> products = productsService.getProductsWithPagingAndFiltering(currentPage, PAGE_SIZE, spec);
-
-        model.addAttribute("products", products.getContent());
+        Page<Product> products =
+                productsService.getProductsWithPagingAndFiltering(currentPage, PAGE_SIZE, productFilter.getSpec());
+        model.addAttribute("products", products);
+        model.addAttribute("filterDef", productFilter.getFilterDefinition().toString());
         model.addAttribute("page", currentPage);
         model.addAttribute("totalPage", products.getTotalPages());
 
-        model.addAttribute("filters", filters.toString());
-
-        model.addAttribute("min", min);
-        model.addAttribute("max", max);
-        model.addAttribute("word", word);
         return "shop-page";
     }
 
